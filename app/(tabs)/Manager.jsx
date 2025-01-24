@@ -1,27 +1,147 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import { addDoc, collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
+import { useUser } from "../userContext";
+import CryptoJS from 'crypto-js';
 
 const PassManager = () => {
-  // Sample Data
-  const [data, setData] = useState([
-    { id: "1", site: "Facebook", username: "john_doe", password: "•••••••" },
-    { id: "2", site: "Twitter", username: "jane_doe", password: "•••••••" },
-  ]);
+
+  const { user } = useUser();
 
   const [newEntry, setNewEntry] = useState({ site: "", username: "", password: "" });
   const [searchText, setSearchText] = useState("");
 
   const handleSave = () => {
-    if (newEntry.site && newEntry.username && newEntry.password) {
-      setData([...data, { ...newEntry, id: Date.now().toString() }]);
-      setNewEntry({ site: "", username: "", password: "" });
+    // if (newEntry.site && newEntry.username && newEntry.password) {
+    //   setData([...data, { ...newEntry, id: Date.now().toString() }]);
+    //   setNewEntry({ site: "", username: "", password: "" });
+    // }
+  };
+
+  const [passwords, setPasswords] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [isPassVisible, setIsPassVisible] = useState(false);
+  const [credentials, setCredentials] = useState({
+    site: '',
+    username: '',
+    password: ''
+  })
+
+  const filteredData = passwords?.filter((item) =>
+    item?.site?.toLowerCase()?.includes(searchText.toLowerCase())
+  );
+
+  const encryptData = (data) => {
+    return CryptoJS.AES.encrypt(JSON.stringify(data), 'sdlakndsnbguyt783264873798grevdsd').toString();
+  };
+
+  const decryptData = (encryptedData) => {
+    const bytes = CryptoJS.AES.decrypt(encryptedData, 'sdlakndsnbguyt783264873798grevdsd');
+    return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+  };
+
+  const savePassword = async () => {
+
+    if (!user) {
+      console.error("User is not authenticated.");
+      return;
+    }
+
+    const uid = user.uid; // Get the UID of the currently authenticated user
+    if (!uid) {
+      console.error("User UID is required to save a password.");
+      return;
+    }
+
+    try {
+      // Validate credentials
+      if (!credentials.password || !credentials.site || !credentials.username) {
+        console.error("All fields (site, username, password) are required.");
+        return;
+      }
+
+      // Encrypt each field individually
+      const encryptedSite = encryptData(credentials.site);
+      const encryptedUsername = encryptData(credentials.username);
+      const encryptedPassword = encryptData(credentials.password);
+
+      // Reference to the user's subcollection in Firestore
+      
+      const userPasswordsCollection = collection(db, 'passwords', uid, 'userPasswords');
+      console.log(userPasswordsCollection);
+      
+      
+      // Add the encrypted data as separate fields in a new document
+      await addDoc(userPasswordsCollection, {
+        site: encryptedSite,
+        username: encryptedUsername,
+        password: encryptedPassword,
+      });
+      console.log('sah');
+
+      console.log("Password saved successfully!");
+
+      // Clear credentials after saving (optional)
+      credentials.username = "";
+      credentials.password = "";
+      credentials.site = "";
+
+    } catch (error) {
+      console.error("Error saving password:", error.message);
     }
   };
 
-  const filteredData = data.filter((item) =>
-    item.site.toLowerCase().includes(searchText.toLowerCase())
-  );
+  const changeHandler = (name, value) => {
+    setCredentials((prevCredentials) => ({
+      ...prevCredentials,
+      [name]: value,
+    }));
+  };
+
+
+  const togglePasswordVisibility = (id) => {
+    setIsPassVisible((prevState) => ({
+      ...prevState,
+      [id]: !prevState[id],
+    }));
+  };
+
+  useEffect(() => {
+
+    if (!user?.uid) {
+      console.error("User UID is required to retrieve passwords.");
+      return;
+    }
+
+    const uid = user?.uid;
+
+    // Reference to the user's subcollection
+    const userPasswordsCollection = collection(db, "passwords", uid, "userPasswords");
+
+    // Set up a Firestore listener
+    const unsubscribe = onSnapshot(
+      userPasswordsCollection,
+      (snapshot) => {
+        const passwords = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setPasswords(passwords);
+        // console.log(passwords);
+
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error listening to passwords collection:", error.message);
+        setLoading(false);
+      }
+    );
+
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
+  }, [user?.uid]);
 
   // Render item function for FlatList
   const renderCard = ({ item }) => (
@@ -32,17 +152,18 @@ const PassManager = () => {
       <View style={[styles.circle, styles.circleBottomLeft]} />
 
       {/* Card Content */}
-      <Text style={styles.siteName}>{item.site}</Text>
-      <Text style={styles.username}>{item.username}</Text>
+      <Text style={styles.siteName}>{decryptData(item?.site)}</Text>
+      <Text style={styles.username}>{decryptData(item?.username)}</Text>
+
       <TextInput
         style={styles.password}
-        value={item.password}
+        value={isPassVisible ? decryptData(item?.password) : '*******'}
         editable={false}
       />
 
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity style={styles.actionButton} onPress={() => { setIsPassVisible(!isPassVisible) }}>
           <Icon name="eye" size={20} color="black" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
@@ -64,7 +185,7 @@ const PassManager = () => {
 
       <View style={{ paddingHorizontal: 12 }}>
 
-        <Text style={{fontSize: 15, opacity: 0.8, marginBottom: 10, marginTop: 12,}}>
+        <Text style={{ fontSize: 15, opacity: 0.8, marginBottom: 10, marginTop: 12, }}>
           Enter Password Info that you want to save
         </Text>
 
@@ -72,28 +193,28 @@ const PassManager = () => {
         <TextInput
           style={styles.input}
           placeholder="Site"
-          value={newEntry.site}
-          onChangeText={(text) => setNewEntry({ ...newEntry, site: text })}
+          value={credentials.site}
+          onChangeText={(text) => changeHandler('site', text)}
         />
         <TextInput
           style={styles.input}
           placeholder="Username"
-          value={newEntry.username}
-          onChangeText={(text) => setNewEntry({ ...newEntry, username: text })}
+          value={credentials.username}
+          onChangeText={(text) => changeHandler('username', text)}
         />
         <TextInput
           style={styles.input}
           placeholder="Password"
           secureTextEntry
-          value={newEntry.password}
-          onChangeText={(text) => setNewEntry({ ...newEntry, password: text })}
+          value={credentials.password}
+          onChangeText={(text) => changeHandler('password', text)}
         />
-        <TouchableOpacity style={styles.button} onPress={handleSave}>
+        <TouchableOpacity style={styles.button} onPress={savePassword}>
           <Text style={styles.buttonText}>Save</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={{paddingHorizontal: 12, paddingVertical: 10}}>
+      <View style={{ paddingHorizontal: 12, paddingVertical: 10 }}>
 
         {/* Search */}
         <Text style={styles.subHeader}>All Your Passwords</Text>
