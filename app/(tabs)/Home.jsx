@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff2e',
     marginBottom: 4,
     padding: 10,
-    borderRadius: '100%',
+    borderRadius: 100,
     paddingHorizontal: 12,
     width: 'fit-content'
 
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#6654C1',
     marginBottom: 4,
     padding: 10,
-    borderRadius: '100%',
+    borderRadius: 100,
     paddingHorizontal: 10,
     width: 'fit-content'
 
@@ -142,6 +142,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 15,
+    gap: 8,
   },
   summaryBox: {
     backgroundColor: '#fff',
