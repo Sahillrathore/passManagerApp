@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, FlatList, ScrollView } from "react-native";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
-import { addDoc, collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import { useUser } from "../userContext";
 import CryptoJS from 'crypto-js';
+import Clipboard from "@react-native-clipboard/clipboard";
 
 const PassManager = () => {
 
@@ -60,11 +61,11 @@ const PassManager = () => {
       const encryptedPassword = encryptData(credentials.password);
 
       // Reference to the user's subcollection in Firestore
-      
+
       const userPasswordsCollection = collection(db, 'passwords', uid, 'userPasswords');
       console.log(userPasswordsCollection);
-      
-      
+
+
       // Add the encrypted data as separate fields in a new document
       await addDoc(userPasswordsCollection, {
         site: encryptedSite,
@@ -84,6 +85,39 @@ const PassManager = () => {
       console.error("Error saving password:", error.message);
     }
   };
+
+  const deletePassword = async (docId) => {
+    if (!user) {
+      console.error("User is not authenticated.");
+      return;
+    }
+
+    const uid = user.uid; // Get the UID of the currently authenticated user
+    if (!uid) {
+      console.error("User UID is required to delete a password.");
+      return;
+    }
+
+    const confirmDelete = window.confirm("Are you sure you want to delete this password?");
+    if (!confirmDelete) {
+      // console.log("Password deletion canceled.");
+      return;
+    }
+
+    try {
+      // Reference to the specific document in the user's subcollection
+      const passwordDocRef = doc(db, 'passwords', uid, 'userPasswords', docId);
+
+      // Delete the document
+      await deleteDoc(passwordDocRef);
+
+      // console.log("Password deleted successfully!");
+
+    } catch (error) {
+      console.error("Error deleting password:", error.message);
+    }
+  };
+
 
   const changeHandler = (name, value) => {
     setCredentials((prevCredentials) => ({
@@ -138,17 +172,17 @@ const PassManager = () => {
   const renderCard = ({ item }) => {
 
     const isVisible = visiblePasswords[item.id];
-    
-    return(
-    <View style={styles.card}>
-      {/* Circular elements for background */}
-      <View style={[styles.circle, styles.circleTopLeft]} />
-      <View style={[styles.circle, styles.circleTopRight]} />
-      <View style={[styles.circle, styles.circleBottomLeft]} />
 
-      {/* Card Content */}
-      <Text style={styles.siteName}>{decryptData(item?.site)}</Text>
-      <Text style={styles.username}>{decryptData(item?.username)}</Text>
+    return (
+      <View style={styles.card}>
+        {/* Circular elements for background */}
+        <View style={[styles.circle, styles.circleTopLeft]} />
+        <View style={[styles.circle, styles.circleTopRight]} />
+        <View style={[styles.circle, styles.circleBottomLeft]} />
+
+        {/* Card Content */}
+        <Text style={styles.siteName}>{decryptData(item?.site)}</Text>
+        <Text style={styles.username}>{decryptData(item?.username)}</Text>
 
         <TextInput
           style={styles.password}
@@ -156,29 +190,39 @@ const PassManager = () => {
           editable={false}
         />
 
-      {/* Action Buttons */}
-      <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => togglePasswordVisibility(item.id)}
-        >
-          <Icon
-            name={isVisible ? "eye-off" : "eye"}
-            size={20}
-            color="black"
-          />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Icon name="pencil" size={20} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Icon name="delete" size={20} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.actionButton}>
-          <Icon name="content-copy" size={20} color="black" />
-        </TouchableOpacity>
+        {/* Action Buttons */}
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => togglePasswordVisibility(item.id)}
+          >
+            <Icon
+              name={isVisible ? "eye-off" : "eye"}
+              size={20}
+              color="black"
+            />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}>
+            <Icon name="pencil" size={20} color="black" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionButton}
+            onPress={() => { deletePassword(item?.id) }}
+          >
+            <Icon name="delete" size={20} color="black" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => {
+              const decryptedPassword = decryptData(item?.password);
+              Clipboard.setString(decryptedPassword);
+              alert("Password copied to clipboard!"); // Feedback (you can customize this)
+            }}
+          >
+            <Icon name="content-copy" size={20} color="black" />
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
     )
   };
 
