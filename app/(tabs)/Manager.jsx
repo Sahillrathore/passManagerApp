@@ -6,6 +6,7 @@ import { db } from '../firebaseConfig';
 import { useUser } from "../userContext";
 import CryptoJS from 'crypto-js';
 import Clipboard from "@react-native-clipboard/clipboard";
+import EditForm from "../../components/EditForm";
 
 const PassManager = () => {
 
@@ -21,6 +22,9 @@ const PassManager = () => {
     username: '',
     password: ''
   })
+  const [editFromVisible, setEditFormVisible] = useState(false);
+  const [passToEdit, setPassToEdit] = useState();
+  const [oldCredentials, setOldCredentials] = useState();
 
   const filteredData = passwords?.filter((item) =>
     item?.site?.toLowerCase()?.includes(searchText.toLowerCase())
@@ -118,6 +122,12 @@ const PassManager = () => {
     }
   };
 
+  const editModal = (id, site, pass, username) => {
+    setPassToEdit(id)
+    const oldCred = {pass, site, username}
+    setOldCredentials(oldCred)
+    setEditFormVisible(true);
+  }
 
   const changeHandler = (name, value) => {
     setCredentials((prevCredentials) => ({
@@ -202,9 +212,12 @@ const PassManager = () => {
               color="black"
             />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
+          <TouchableOpacity style={styles.actionButton}
+            onPress={() => { editModal(item?.id, item?.site, item?.password, item?.username) }}
+          >
             <Icon name="pencil" size={20} color="black" />
           </TouchableOpacity>
+
           <TouchableOpacity style={styles.actionButton}
             onPress={() => { deletePassword(item?.id) }}
           >
@@ -225,7 +238,7 @@ const PassManager = () => {
       </View>
     )
   };
-
+  
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.header}>SecureVault</Text>
@@ -280,6 +293,19 @@ const PassManager = () => {
           contentContainerStyle={styles.cardList}
         />
       </View>
+
+      {
+        editFromVisible &&
+        <EditForm
+          user={user}
+          passToEdit={passToEdit}
+          credentials={credentials}
+          setCredentials={setCredentials}
+          editFromVisible={editFromVisible}
+          setEditFormVisible={setEditFormVisible}
+          oldCredentials={oldCredentials}
+        />
+      }
 
     </ScrollView>
   );
