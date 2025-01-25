@@ -10,19 +10,11 @@ const PassManager = () => {
 
   const { user } = useUser();
 
-  const [newEntry, setNewEntry] = useState({ site: "", username: "", password: "" });
   const [searchText, setSearchText] = useState("");
-
-  const handleSave = () => {
-    // if (newEntry.site && newEntry.username && newEntry.password) {
-    //   setData([...data, { ...newEntry, id: Date.now().toString() }]);
-    //   setNewEntry({ site: "", username: "", password: "" });
-    // }
-  };
 
   const [passwords, setPasswords] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isPassVisible, setIsPassVisible] = useState(false);
+  const [visiblePasswords, setVisiblePasswords] = useState({});
   const [credentials, setCredentials] = useState({
     site: '',
     username: '',
@@ -100,9 +92,8 @@ const PassManager = () => {
     }));
   };
 
-
   const togglePasswordVisibility = (id) => {
-    setIsPassVisible((prevState) => ({
+    setVisiblePasswords((prevState) => ({
       ...prevState,
       [id]: !prevState[id],
     }));
@@ -144,7 +135,11 @@ const PassManager = () => {
   }, [user?.uid]);
 
   // Render item function for FlatList
-  const renderCard = ({ item }) => (
+  const renderCard = ({ item }) => {
+
+    const isVisible = visiblePasswords[item.id];
+    
+    return(
     <View style={styles.card}>
       {/* Circular elements for background */}
       <View style={[styles.circle, styles.circleTopLeft]} />
@@ -155,16 +150,23 @@ const PassManager = () => {
       <Text style={styles.siteName}>{decryptData(item?.site)}</Text>
       <Text style={styles.username}>{decryptData(item?.username)}</Text>
 
-      <TextInput
-        style={styles.password}
-        value={isPassVisible ? decryptData(item?.password) : '*******'}
-        editable={false}
-      />
+        <TextInput
+          style={styles.password}
+          value={isVisible ? decryptData(item?.password) : "*******"}
+          editable={false}
+        />
 
       {/* Action Buttons */}
       <View style={styles.actionButtons}>
-        <TouchableOpacity style={styles.actionButton} onPress={() => { setIsPassVisible(!isPassVisible) }}>
-          <Icon name="eye" size={20} color="black" />
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => togglePasswordVisibility(item.id)}
+        >
+          <Icon
+            name={isVisible ? "eye-off" : "eye"}
+            size={20}
+            color="black"
+          />
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
           <Icon name="pencil" size={20} color="black" />
@@ -177,7 +179,8 @@ const PassManager = () => {
         </TouchableOpacity>
       </View>
     </View>
-  );
+    )
+  };
 
   return (
     <ScrollView style={styles.container}>
