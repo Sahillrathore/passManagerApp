@@ -1,11 +1,14 @@
-import React from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, FlatList, Image } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { useUser } from '../userContext';
 
 export default function Home() {
+
+  const { user, setUser } = useUser(); 
+  
 
   const savedPasswords = [
     { id: '1', name: 'Figma account', email: 'joshuasanugroho@gmail.com', img: 'https://cdn4.iconfinder.com/data/icons/logos-brands-in-colors/3000/figma-logo-512.png' },
@@ -33,7 +36,7 @@ export default function Home() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, Sahil</Text>
+        <Text style={styles.greeting}>Hello, {user?.email}</Text>
         <Text style={styles.subtext}>Save your password easily and securely</Text>
       </View>
 
