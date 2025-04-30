@@ -4,11 +4,14 @@ import { Ionicons } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useUser } from '../userContext';
+import { useNavigation } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 
 export default function Home() {
 
   const { user, setUser } = useUser(); 
-  
 
   const savedPasswords = [
     { id: '1', name: 'Figma account', email: 'joshuasanugroho@gmail.com', img: 'https://cdn4.iconfinder.com/data/icons/logos-brands-in-colors/3000/figma-logo-512.png' },
@@ -18,6 +21,53 @@ export default function Home() {
     // { id: '5', name: 'Figma account', email: 'joshuasanugroho@gmail.com' },
     // { id: '6', name: 'Instagram account', email: 'sijoshuanugroho' },
   ];
+
+  const navigation = useNavigation();
+
+  const [passwords, setPasswords] = useState([]);
+
+  useEffect(() => {
+
+    if (!user?.uid) {
+      console.error("User UID is required to retrieve passwords.");
+      return;
+    }
+
+    const uid = user?.uid;
+
+    // Reference to the user's subcollection
+    const userPasswordsCollection = collection(db, "passwords", uid, "userPasswords");
+
+    // Set up a Firestore listener
+    const unsubscribe = onSnapshot(
+      userPasswordsCollection,
+      (snapshot) => {
+        const passwords = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setPasswords(passwords);
+        // console.log(passwords);
+
+        // setLoading(false);
+      },
+      (error) => {
+        console.error("Error listening to passwords collection:", error.message);
+        // setLoading(false);
+      }
+    );
+
+    // Cleanup listener on component unmount
+    return () => unsubscribe();
+  }, [user?.uid]);
+
+  const redirect = () => {
+    if(user) {
+      navigation.navigate("Manager");
+    } else{
+      navigation.navigate("Login")
+    }
+  }
 
   const renderItem = ({ item }) => (
     <View style={styles.savedPasswordItem}>
@@ -36,7 +86,7 @@ export default function Home() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, {user?.email}</Text>
+        <Text style={styles.greeting}>Hello, <span style={styles.subtext}>{user?.email}</span></Text>
         <Text style={styles.subtext}>Save your password easily and securely</Text>
       </View>
 
@@ -46,7 +96,9 @@ export default function Home() {
         </Text>
         <Text style={styles.newPasswordText}>New password</Text>
         <Text style={styles.newPasswordSubtext}>Save your new password with ease</Text>
-        <TouchableOpacity style={styles.addNewButton}>
+        <TouchableOpacity style={styles.addNewButton}
+          onPress={redirect}
+        >
           <Text style={styles.addNewText}>Add new +</Text>
         </TouchableOpacity>
       </View>
@@ -56,7 +108,7 @@ export default function Home() {
           <View style={styles.summaryIcons}>
             <MaterialCommunityIcons name="key-variant" size={24} color="white" />
           </View>
-          <Text style={styles.summaryNumber}>32 pass</Text>
+          <Text style={styles.summaryNumber}>{passwords?.length} pass</Text>
           <Text style={styles.summaryText}>Saved password</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.summaryBox}>

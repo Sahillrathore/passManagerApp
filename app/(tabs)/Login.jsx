@@ -3,10 +3,12 @@ import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'reac
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebaseConfig"; // Ensure this points to your Firebase config file
 import { useUser } from '../userContext';
+import { useNavigation } from 'expo-router';
 
 const Login = ({ onLoginSuccess, switchToSignup }) => {
 
     const {user, setUser} = useUser(); 
+    const navigation = useNavigation();
     
     const [formData, setFormData] = useState({
         email: '',
@@ -24,8 +26,9 @@ const Login = ({ onLoginSuccess, switchToSignup }) => {
             const userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
             Alert.alert("Success", "You have successfully logged in!");
             
-            setUser(userCredential)
-            // console.log(user);
+            // setUser(userCredential)
+            console.log(user);
+            navigation.navigate("Home"); // Replace "Home" with the actual route name for "/"
             
         } catch (err) {
             Alert.alert("Login Error", err.message);
