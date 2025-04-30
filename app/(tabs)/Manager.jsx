@@ -22,13 +22,6 @@ const PassManager = () => {
     username: '',
     password: ''
   })
-  const [editFromVisible, setEditFormVisible] = useState(false);
-  const [passToEdit, setPassToEdit] = useState();
-  const [oldCredentials, setOldCredentials] = useState();
-
-  const filteredData = passwords?.filter((item) =>
-    item?.site?.toLowerCase()?.includes(searchText.toLowerCase())
-  );
 
   const encryptData = (data) => {
     return CryptoJS.AES.encrypt(JSON.stringify(data), 'sdlakndsnbguyt783264873798grevdsd').toString();
@@ -38,6 +31,17 @@ const PassManager = () => {
     const bytes = CryptoJS.AES.decrypt(encryptedData, 'sdlakndsnbguyt783264873798grevdsd');
     return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
   };
+  
+  const [editFromVisible, setEditFormVisible] = useState(false);
+  const [passToEdit, setPassToEdit] = useState();
+  const [oldCredentials, setOldCredentials] = useState();
+
+  const filteredData = passwords?.filter((item) => {
+    const decryptedSite = decryptData(item?.site);
+    return decryptedSite.toLowerCase().includes(searchText.trim().toLowerCase());
+  });
+
+
 
   const savePassword = async () => {
 
