@@ -7,6 +7,7 @@ import { useUser } from "../userContext";
 import CryptoJS from 'crypto-js';
 import Clipboard from "@react-native-clipboard/clipboard";
 import EditForm from "../../components/EditForm";
+import AddPassForm from "../../components/AddPassForm";
 
 const PassManager = () => {
 
@@ -17,6 +18,7 @@ const PassManager = () => {
   const [passwords, setPasswords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [visiblePasswords, setVisiblePasswords] = useState({});
+  const [showPassForm, setShowPassForm] = useState(false);
   const [credentials, setCredentials] = useState({
     site: '',
     username: '',
@@ -246,41 +248,16 @@ const PassManager = () => {
   return (
     <ScrollView style={styles.container}>
 
-      <View style={{ paddingHorizontal: 12 }}>
-
-        <Text style={{ fontSize: 15, opacity: 0.8, marginBottom: 10, marginTop: 12, }}>
-          Enter Password Info that you want to save
-        </Text>
-
-        {/* Form */}
-        <TextInput
-          style={styles.input}
-          placeholder="Site"
-          value={credentials.site}
-          onChangeText={(text) => changeHandler('site', text)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          value={credentials.username}
-          onChangeText={(text) => changeHandler('username', text)}
-        />
-        <TextInput
-          style={styles.input}
-          placeholder="Password"
-          secureTextEntry
-          value={credentials.password}
-          onChangeText={(text) => changeHandler('password', text)}
-        />
-        <TouchableOpacity style={styles.button} onPress={savePassword}>
-          <Text style={styles.buttonText}>Save</Text>
-        </TouchableOpacity>
-      </View>
-
       <View style={{ paddingHorizontal: 12, paddingVertical: 10 }}>
 
         {/* Search */}
-        <Text style={styles.subHeader}>All Your Passwords</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Text style={styles.subHeader}>All Your Passwords</Text>
+          <TouchableOpacity onPress={() => setShowPassForm(true)} style={styles.addButton}>
+            <Text style={styles.addButtonText}>Add Pass</Text>
+          </TouchableOpacity>
+        </View>
+
         <TextInput
           style={styles.searchInput}
           placeholder="Search"
@@ -309,6 +286,8 @@ const PassManager = () => {
           oldCredentials={oldCredentials}
         />
       }
+
+      {showPassForm && <AddPassForm setShowPassForm={setShowPassForm} />}
 
     </ScrollView>
   );
@@ -348,6 +327,17 @@ const styles = StyleSheet.create({
     color: "white",
     fontWeight: "bold",
   },
+  addButton: {
+    backgroundColor: '#16379aeb',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 6,
+  },
+  addButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+
   subHeader: {
     fontSize: 18,
     fontWeight: "bold",
