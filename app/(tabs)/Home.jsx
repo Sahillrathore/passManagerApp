@@ -1,6 +1,4 @@
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, FlatList, Image } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Ionicons } from '@expo/vector-icons';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useUser } from '../userContext';
@@ -8,6 +6,7 @@ import { useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
+import AddPassForm from '../../components/AddPassForm';
 
 export default function Home() {
 
@@ -25,6 +24,7 @@ export default function Home() {
   const navigation = useNavigation();
 
   const [passwords, setPasswords] = useState([]);
+  const [showPassForm, setShowPassForm] = useState(false);
 
   useEffect(() => {
 
@@ -61,14 +61,6 @@ export default function Home() {
     return () => unsubscribe();
   }, [user?.uid]);
 
-  const redirect = () => {
-    if(user) {
-      navigation.navigate("Manager");
-    } else{
-      navigation.navigate("Login")
-    }
-  }
-
   const renderItem = ({ item }) => (
     <View style={styles.savedPasswordItem}>
       <Image
@@ -97,7 +89,7 @@ export default function Home() {
         <Text style={styles.newPasswordText}>New password</Text>
         <Text style={styles.newPasswordSubtext}>Save your new password with ease</Text>
         <TouchableOpacity style={styles.addNewButton}
-          onPress={redirect}
+          onPress={()=>setShowPassForm(!showPassForm)}
         >
           <Text style={styles.addNewText}>Add new +</Text>
         </TouchableOpacity>
@@ -126,6 +118,12 @@ export default function Home() {
         renderItem={renderItem} // Render each item
         showsVerticalScrollIndicator={false} // Hide scroll indicator
       />
+
+      {
+        showPassForm &&
+        <AddPassForm showPassForm={showPassForm} setShowPassForm={setShowPassForm} />
+      }
+      
     </ScrollView>
   );
 }

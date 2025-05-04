@@ -245,7 +245,6 @@ const PassManager = () => {
   
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>SecureVault</Text>
 
       <View style={{ paddingHorizontal: 12 }}>
 
