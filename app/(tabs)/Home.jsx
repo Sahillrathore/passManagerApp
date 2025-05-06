@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, FlatList, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, FlatList, Image, Button } from 'react-native';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useUser } from '../userContext';
@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebaseConfig';
 import AddPassForm from '../../components/AddPassForm';
+import Toast from '../../components/Toast';
 
 export default function Home() {
 
@@ -75,8 +76,23 @@ export default function Home() {
     </View>
   );
 
+  const [toast, setToast] = useState(null);
+
+  const showToast = (type) => {
+    setToast({ type, message: type === 'success' ? 'Saved successfully!' : 'Something went wrong!' });
+  };
+
   return (
     <ScrollView style={styles.container}>
+
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onHide={() => setToast(null)}
+        />
+      )}
+      
       <View style={styles.header}>
         <Text style={styles.greeting}>Hello, <span style={styles.subtext}>{user?.email}</span></Text>
         <Text style={styles.subtext}>Save your password easily and securely</Text>
