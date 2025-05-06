@@ -107,7 +107,7 @@ export default function Home() {
           <View style={[styles.summaryIcons, { backgroundColor: '#47B5CC' }]}>
             <MaterialCommunityIcons name="web" size={24} color="white" />
           </View>
-          <Text style={styles.summaryNumber}>27 sites</Text>
+          <Text style={styles.summaryNumber}>{passwords?.length} sites</Text>
           <Text style={styles.summaryText}>Saved sites</Text>
         </TouchableOpacity>
       </View>
