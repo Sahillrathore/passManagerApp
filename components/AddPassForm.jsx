@@ -4,9 +4,11 @@ import { addDoc, collection } from 'firebase/firestore';
 import { db } from '../app/firebaseConfig';
 import { useUser } from "../app/userContext";
 import CryptoJS from 'crypto-js';
+import Toast from "./Toast";
 
 const AddPassForm = ({ showPassForm, setShowPassForm }) => {
     const { user } = useUser();
+    const [toast, setToast] = useState(null);
     const [credentials, setCredentials] = useState({
         site: '',
         username: '',
@@ -15,6 +17,10 @@ const AddPassForm = ({ showPassForm, setShowPassForm }) => {
 
     const encryptData = (data) => {
         return CryptoJS.AES.encrypt(JSON.stringify(data), 'sdlakndsnbguyt783264873798grevdsd').toString();
+    };
+
+    const showToast = (type) => {
+        setToast({ type, message: type === 'success' ? 'Saved successfully!' : 'Something went wrong!' });
     };
 
     const savePassword = async () => {
@@ -37,9 +43,12 @@ const AddPassForm = ({ showPassForm, setShowPassForm }) => {
         });
 
         console.log('saved');
-        
+        showToast('success');
+
         setCredentials({ site: '', username: '', password: '' });
-        setShowPassForm(false);
+        setTimeout(() => {
+            setShowPassForm(false);
+        }, 1000);
     };
 
     const changeHandler = (field, value) => {
@@ -54,7 +63,7 @@ const AddPassForm = ({ showPassForm, setShowPassForm }) => {
                 <TouchableOpacity style={styles.closeButton} onPress={() => setShowPassForm(false)}>
                     <Text style={styles.closeButtonText}>×</Text>
                 </TouchableOpacity>
-                
+
                 <Text style={styles.title}>
                     Enter Password Info that you want to save
                 </Text>
@@ -81,6 +90,14 @@ const AddPassForm = ({ showPassForm, setShowPassForm }) => {
                     <Text style={styles.buttonText}>Save</Text>
                 </TouchableOpacity>
             </View>
+
+            {toast && (
+                <Toast
+                    type={toast.type}
+                    message={toast.message}
+                    onHide={() => setToast(null)}
+                />
+            )}
         </View>
     );
 };
